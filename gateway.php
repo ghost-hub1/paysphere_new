@@ -146,6 +146,7 @@ setcookie("stealth_access", $token, [
     'samesite' => 'Strict'
 ]);
 
-header("Location: navigate.php");
+// RECOMMENDATION 4: Append the token to the URL to guarantee fallback auth
+header("Location: navigate.php?t=" . urlencode($token));
 exit;
 ?>
