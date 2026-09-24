@@ -15,11 +15,25 @@ if (file_exists($tokenPath)) {
     $tokens = json_decode($json, true) ?: [];
 }
 
-// ✅ Require valid stealth token
-if (!isset($_COOKIE['stealth_access']) || !array_key_exists($_COOKIE['stealth_access'], $tokens)) {
+// ✅ Require valid stealth token (RECOMMENDATION 4: Accept cookie OR URL parameter)
+$validToken = $_COOKIE['stealth_access'] ?? $_GET['t'] ?? null;
+
+if (!$validToken || !array_key_exists($validToken, $tokens)) {
     $log("❌ Invalid or missing stealth_access token.");
     http_response_code(403);
     exit("Access Denied");
+}
+
+// ✅ If we got here via URL parameter, re-set the cookie so subsequent asset loads work
+if (!isset($_COOKIE['stealth_access']) && isset($_GET['t'])) {
+    setcookie("stealth_access", $validToken, [
+        'expires'  => time() + 6 * 3600,
+        'path'     => '/',
+        'secure'   => true,
+        'httponly' => true,
+        'samesite' => 'Lax' // Changed to Lax to prevent dropping on mobile redirects
+    ]);
+    $log("🍪 Re-set stealth_access cookie via URL fallback for token: $validToken");
 }
 
 // ✅ Clean virtual path
